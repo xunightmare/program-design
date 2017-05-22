@@ -1,0 +1,81 @@
+#include<stdio.h> 
+#include <stdlib.h>
+#include <time.h>
+
+#ifndef Node_H 
+#define Node_H
+#define ERROR -1
+#define MaxCheck 8
+int MinCheck;
+int MaxCustSingleLine;
+int MaxLines;
+int MaxSeqLen;
+int EasySeqLen;
+int MaxCustCheck;
+int MaxSec;
+struct command {//command用来储存接收到的指令，具体接收什么变量暂时未确定
+	int commandtype;
+	int no;  //表示乘客的编号，只有在要加入乘客时需要用到 
+};
+struct command commands[MaxCheck];  //设为全局变量，下标表示安检口的编号，记录每个安检口的命令 
+int startcheck, startbreak; //记录计时开始的时刻 
+int breaktime[MaxCheck+1]; //记录休息时间 
+int nowtime=0;
+enum states { CLOSE, FREE, CHECKING, BREAK, BEFORECLOSE, BEFOREBREAK };
+enum states state[MaxCheck+1];
+enum commandtype { OPEN, CLOSECHECK, ADDPASSENGER, REST }; //安检口接收到的指令
+enum  stateofall { OFFDUTY, WORKING, STOPWORKING };//定义整个机场安检口的工作状态
+int no = 0; //表示最后进入的乘客编号
+int nowchecknum; //表示当前开放的安检口数目
+enum stateofall stateofairport; //表示机场现在的状态
+
+struct entry{
+	int no;     //事件发生编号 
+	int sec; 	//事件发生间隔时间      (暂时默认1到10)
+	int type;	//事件类型：0-乘客到达，1-安检口申请暂停,2-下班；（按90：9：1） 
+    int mans;   //事件属性1-到达人数    (暂时默认1到10)
+	int check;  //事件属性2-申请暂停的安检口编号
+}events[1000];
+int number;//事件数目
+
+		   //定义链表的结点
+struct node {
+	int state; //安检口的状态 
+	int ID; //安检口的编号 
+	int no; //乘客编号   头结点中表示乘客数量 
+	int checktime; //安检时间 头结点中表示休息时间 
+	struct node *next;
+};
+
+//用一个结构数组存放每个链表头结点的位置
+struct node * check[MaxCheck+1];//下标表示安检口编号//0位置空出 
+//刚开始ID全部初始化为0表示安检口处于关闭状态 
+
+
+
+struct queue{//队列 
+	int no;
+	struct queue *next;
+}*qhead=NULL,*qnow,*qq;
+extern int ql=0;//队列中人数 
+
+void allocation();
+void setallocation(); //设置配置参数 
+void renewfile();     //更新文件中配置参数 
+void readfile();      //读取文件中配置
+ 
+void event();
+void cindat();   //将事件写入二进制文件
+
+int entrycheck();//判断队列是否为空 不为空返会进入安检口乘客编号
+void entryline(int no);//进入队列排队 
+void printoutput(); //输出 
+
+struct node * initlist(int n); //创建一个空链表（打开一个安检口）
+int destroylist(int n);//销毁一个链表（关闭一个安检口）
+int deletefirstnode(struct node*ph); //从链表头部删除一个结点（一个乘客安检完成）
+int insertintail(struct node*ph,int n,int time);//向链表尾部插入一个结点（一个乘客进入安检口）
+void changecheck1(int ID);//每过1s检查一次安检口状态是否需要改变
+int changecheck2(int ID,struct command thecommand);//接受指令使安检口状态迁移 
+void work(); //安检口工作 
+#endif
